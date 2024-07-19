@@ -5,7 +5,7 @@ async fn greet(req: HttpRequest) -> impl Responder {
     format!("Hello {}!", &name)
 }
 
-async fn health_check(_: HttpRequest) -> impl Responder {
+async fn health_check() -> impl Responder {
     HttpResponse::Ok()
 }
 
