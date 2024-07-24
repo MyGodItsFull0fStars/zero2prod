@@ -2,24 +2,9 @@ use std::net::TcpListener;
 
 use actix_web::{dev::Server, web, App, HttpResponse, HttpServer};
 
-#[derive(serde::Deserialize)]
-struct FormData {
-    email: String,
-    name: String,
-}
-
-impl FormData {
-    fn new(email: String, name: String) -> Self {
-        Self { email, name }
-    }
-
-    fn default() -> Self {
-        Self {
-            email: "".to_string(),
-            name: "".to_string(),
-        }
-    }
-}
+pub mod configuration;
+pub mod routes;
+pub mod startup;
 
 async fn health_check() -> HttpResponse {
     HttpResponse::Ok().finish()
