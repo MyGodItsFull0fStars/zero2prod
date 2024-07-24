@@ -12,11 +12,24 @@ path = "src/lib.rs"
 actix-web = "4"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 serde = { version = "1", features = ["derive"] }
+config = "0.13"
+
+[dependencies.sqlx]
+version = "0.8"
+default-features = false
+features = [
+    "runtime-tokio-rustls",
+    "macros",
+    "postgres",
+    "uuid",
+    "chrono",
+    "migrate",
+]
 
 # dev dependencies are used exclusively when running tests or examples
 # they do not get included in the final application binary
 [dev-dependencies]
-reqwest = "0.11"
+reqwest = "0.12.5"
 
 # Double square brackets denote an array in TOML
 # We can only have one library in a project, but we can have multiple binaries
