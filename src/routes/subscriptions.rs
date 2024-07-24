@@ -1,17 +1,17 @@
 use actix_web::{web, HttpResponse};
 
 #[derive(serde::Deserialize)]
-struct FormData {
+pub struct FormData {
     email: String,
     name: String,
 }
 
 impl FormData {
-    fn new(email: String, name: String) -> Self {
+    pub fn new(email: String, name: String) -> Self {
         Self { email, name }
     }
 
-    fn default() -> Self {
+    pub fn default() -> Self {
         Self {
             email: "".to_string(),
             name: "".to_string(),
