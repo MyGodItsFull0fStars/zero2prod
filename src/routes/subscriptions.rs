@@ -1,6 +1,7 @@
 use actix_web::{web, HttpResponse};
 use chrono::Utc;
 use sqlx::PgPool;
+use tracing::Instrument;
 use uuid::Uuid;
 
 #[derive(serde::Deserialize)]
@@ -29,16 +30,23 @@ pub async fn subscribe(
 ) -> HttpResponse {
     // generate a random unique identifier
     let request_id = Uuid::new_v4();
-    tracing::info!(
-        "request_id {} - Adding '{}' '{}' as a new subscriber",
-        request_id,
-        form.email,
-        form.name,
+    // Spans like logs have an associated level
+    // `info_span` creates a span at the info level
+    let request_span = tracing::info_span!(
+        "Adding new subscriber.",
+        // this notation is called `structured information`
+        // the % before a value tells `tracing` to use the `Display` implementation of the value
+        %request_id,
+        subscriber_email = %form.email,
+        subscriber_name = %form.name,
     );
-    tracing::info!(
-        "request_id {} - Saving new subscriber details in the database",
-        request_id
-    );
+
+    // Using `enter` in an async function is a recipe for disaster!
+    // So don't try this at home!!
+    let _request_span_guard = request_span.enter();
+
+    let query_span = tracing::info_span!("Saving new subscriber details in the database");
+
     match sqlx::query!(
         r#"
         INSERT INTO subscriptions (id, email, name, subscribed_at)
@@ -52,21 +60,13 @@ pub async fn subscribe(
     // Using the pool as a drop-in replacement for a single DBConnection
     // Allows us to pool the queries concurrently
     .execute(pool.get_ref())
+    // First we attach the instrumentation, then we `await` it
+    .instrument(query_span)
     .await
     {
-        Ok(_) => {
-            tracing::info!(
-                "request_id {} - New subscriber details have been saved",
-                request_id
-            );
-            HttpResponse::Ok().finish()
-        }
+        Ok(_) => HttpResponse::Ok().finish(),
         Err(e) => {
-            tracing::error!(
-                "request_id {} - Failed to execute query: {:?}",
-                request_id,
-                e
-            );
+            tracing::error!("Failed to execute query: {:?}", e);
             HttpResponse::InternalServerError().finish()
         }
     }
